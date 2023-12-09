@@ -30,9 +30,13 @@ class _TicketListState extends State<TicketList> {
           var datalength = data!.length;
 
           return datalength == 0
-              ? const Center(
-                  child: Text('no data found'),
-                )
+              ? const SizedBox(
+                height: 200,
+                child:  Center(
+                  child: Text('No data found'),
+                ),
+              )
+             
               : ListView.builder(
                   shrinkWrap: true,
                   physics: const ClampingScrollPhysics(),
@@ -42,9 +46,11 @@ class _TicketListState extends State<TicketList> {
                         tktTitle: data[i].tktTitle,
                         tktDesc: data[i].tktDesc,
                         tktCreatedBy: data[i].tktCreatedBy,
+                        tktAssignedTo: data[i].tktAssignedTo,
                         tktStatus: data[i].tktStatus,
                         tktCreatedOn: DateTime.parse(data[i].tktCreatedOn),
                         tktReplyOn: DateTime.parse(data[i].tktReplyOn),
+                        tktDocCnt: data[i].tktDocCnt,
                       ));
         } else {
           return const Center(

@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "37586350703",
+    "project_id": "hits429",
+    "storage_bucket": "hits429.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:37586350703:android:bcdbfd4d7d1389eb19139a",
+        "android_client_info": {
+          "package_name": "com.hawkinscookerslimited.ticket_app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBWOGDk9ecjeDoltI6IZ20AaKnpxf2ybqc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

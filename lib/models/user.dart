@@ -70,3 +70,9 @@ class Animal {
     required this.empName,
   });
 }
+class TktSharedFile {
+  final String file;
+  TktSharedFile({
+    required this.file
+  });
+}

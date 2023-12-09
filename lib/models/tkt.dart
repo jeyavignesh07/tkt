@@ -1,4 +1,6 @@
 
+import 'dart:ffi';
+
 class TktHdrFields{
   static const String tktNo='tktNo';
   static const String tktTitle='tktTitle';
@@ -17,6 +19,7 @@ class TktHdr {
   final String tktCreatedOn;
   final String tktReplyOn;
   final String tktStatus;
+  
   const TktHdr(
       {required this.tktNo,
       required this.tktTitle,
@@ -25,6 +28,7 @@ class TktHdr {
       required this.tktCreatedOn, 
       required this.tktReplyOn,
       required this.tktStatus,
+      
       }
     );
 
@@ -36,6 +40,7 @@ class TktHdr {
     TktHdrFields.tktCreatedOn: tktCreatedOn,
     TktHdrFields.tktReplyOn: tktReplyOn,
     TktHdrFields.tktStatus: tktStatus,
+    
   };
   static TktHdr fromJson(Map<String, Object?> json)=>TktHdr(
     tktNo:json['tktNo'] as String,
@@ -45,6 +50,7 @@ class TktHdr {
     tktCreatedOn: json['tktCreatedOn'] as String,
     tktReplyOn: json['tktReplyOn'] as String,
     tktStatus: json['tktStatus'] as String,
+    
   ); 
 }
 
@@ -95,6 +101,61 @@ class TktDtlCopy {
   ); 
 }
 
+class TktDtlTagFields{
+  static const String tktNo='tktNo';
+  static const String tags='tags';
+}
+class TktDtlTag {
+  final String tktNo;
+  final String tags;
+
+  const TktDtlTag(
+      {required this.tktNo,
+      required this.tags});
+
+  Map<String, Object?> toJson() => {
+    TktDtlTagFields.tktNo: tktNo,
+    TktDtlTagFields.tags: tags,
+  };
+  static TktDtlTag fromJson(Map<String, Object?> json)=>TktDtlTag(
+    tktNo:json['tktNo'] as String,
+    tags: json['tags'] as String,
+  ); 
+}
+
+class TktDtlAttachmentFields{
+  static const String tktNo='tktNo';
+  static const String docid='docid';
+  static const String addedBy='addedBy';
+  static const String addedOn='addedOn';
+}
+
+class TktDtlAttachment {
+  final String tktNo;
+  final String docid;
+  final String addedBy;
+  final String addedOn;
+  const TktDtlAttachment(
+      {required this.tktNo,
+      required this.docid,
+      required this.addedBy,
+      required this.addedOn, 
+      });
+
+  Map<String, Object?> toJson() => {
+    TktDtlAttachmentFields.tktNo: tktNo,
+    TktDtlAttachmentFields.docid: docid,
+    TktDtlAttachmentFields.addedBy: addedBy,
+    TktDtlAttachmentFields.addedOn: addedOn,
+  };
+  static TktDtlAttachment fromJson(Map<String, Object?> json)=>TktDtlAttachment(
+    tktNo:json['tktNo'] as String,
+    docid: json['docid'] as String,
+    addedBy: json['added_by'] as String,
+    addedOn: json['added_on'] as String,
+  ); 
+}
+
 class TktStsCount {
   final String black;
   final String yellow;
@@ -108,3 +169,36 @@ class TktStsCount {
       }
     );
 }
+
+class Tags {
+  final String tag;
+  const Tags(
+      {required this.tag,
+      }
+    );
+}
+
+class TktCardHdr {
+  final String tktNo;
+  final String tktTitle;
+  final String tktDesc;
+  final String tktCreatedBy;
+  final String tktAssignedTo;
+  final String tktCreatedOn;
+  final String tktReplyOn;
+  final String tktStatus;
+  final int tktDocCnt;
+  
+  const TktCardHdr(
+      {required this.tktNo,
+      required this.tktTitle,
+      required this.tktDesc,
+      required this.tktCreatedBy,
+      required this.tktAssignedTo,
+      required this.tktCreatedOn, 
+      required this.tktReplyOn,
+      required this.tktStatus,
+      required this.tktDocCnt,
+      }
+    );
+  }

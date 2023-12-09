@@ -1,0 +1,69 @@
+[
+    {
+      "author": {
+        "firstName": "Saurabh",
+        "id": "e52552f4-835d-4dbe-ba77-b076e659774d",
+        "imageUrl": "https://hrd.hawkins-futura.com/Profile_Pic/948.jpg",
+        "lastName": "Singh"
+      },
+      "createdAt": 1655648403000,
+      "height": 1280,
+      "id": "02797655-4d73-402e-a319-50fde79e2bc4",
+      "name": "Hawkins",
+      "size": 585000,
+      "status": "seen",
+      "type": "image",
+      "uri": "https://www.buyhawkins.in/cw_pix/INW30.jpg",
+      "width": 1920
+    },
+    {
+      "author": {
+        "firstName": "Saurabh",
+        "id": "e52552f4-835d-4dbe-ba77-b076e659774d",
+        "imageUrl": "https://hrd.hawkins-futura.com/Profile_Pic/948.jpg",
+        "lastName": "Singh"
+      },
+      "createdAt": 1655648402000,
+      "id": "4e048753-2d60-4144-bc28-9967050aaf12",
+      "status": "seen",
+      "text": "Yeh le",
+      "type": "text"
+    },
+    {
+      "author": {
+        "firstName": "Matthew",
+        "id": "82091008-a484-4a89-ae75-a22bf8d6f3ac",
+        "lastName": "White"
+      },
+      "createdAt": 1655648401000,
+      "id": "64747b28-df19-4a0c-8c47-316dc3546e3c",
+      "status": "seen",
+      "text": "Acha frying pan bathaye",
+      "type": "text"
+    },
+    {
+      "author": {
+        "firstName": "Matthew",
+        "id": "82091008-a484-4a89-ae75-a22bf8d6f3ac",
+        "lastName": "White"
+      },
+      "createdAt": 1655624463000,
+      "id": "113bb2e8-f74e-42cd-aa30-4085a0f52c58",
+      "status": "seen",
+      "text": "No status",
+      "type": "text"
+    },
+    {
+      "author": {
+        "firstName": "Saurabh",
+        "id": "e52552f4-835d-4dbe-ba77-b076e659774d",
+        "imageUrl": "https://hrd.hawkins-futura.com/Profile_Pic/948.jpg",
+        "lastName": "Singh"
+      },
+      "createdAt": 1655624462000,
+      "id": "22212d42-1252-4641-9786-d6f83b2ce4a8",
+      "status": "seen",
+      "text": "Hey Saala Kya status",
+      "type": "text"
+    }
+  ]

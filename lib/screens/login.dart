@@ -1,16 +1,21 @@
 import 'dart:convert';
+import 'dart:io';
 import 'package:double_back_to_close_app/double_back_to_close_app.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_firebase_chat_core/flutter_firebase_chat_core.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:http/http.dart' as http;
+import 'package:path_provider/path_provider.dart';
 import 'package:rive/rive.dart';
 import 'package:ticket_app/db/tkt_db.dart';
 import 'package:ticket_app/routes/routes.dart';
 import 'package:ticket_app/service/api_base.dart';
 import 'package:ticket_app/widgets/error_warning_ms.dart';
+import 'package:flutter_chat_types/flutter_chat_types.dart' as types;
 
-import '../models/user.dart';
+import '../models/user.dart' as tktUser;
 
 class Login extends StatefulWidget {
   const Login({Key? key}) : super(key: key);
@@ -31,7 +36,7 @@ class _LoginState extends State<Login> {
     getUserData();
   }
 
-  Future insertUser(User user) async {
+  Future insertUser(tktUser.User user) async {
     await TktDb.instance.createUser(user);
   }
 
@@ -58,7 +63,7 @@ class _LoginState extends State<Login> {
     if (_dataValidation()) {
       var headers = {'Content-Type': 'application/json'};
       var request = http.Request(
-          'POST', Uri.parse(ApiBase.baseUrl+ApiBase.loginEndPoint));
+          'POST', Uri.parse(ApiBase.baseUrl + ApiBase.loginEndPoint));
       request.body = json.encode({
         "uid": uidController.text,
         "upwd": pwdController.text,
@@ -77,11 +82,13 @@ class _LoginState extends State<Login> {
                 "Please enter valid Credentials.", "#ff4d4d");
             return;
           }
-          List<User> usrObjs =
-              data2.map((tagJson) => User.fromJson(tagJson)).toList();
-          TktDb.instance.deleteUserInfo();
-          insertUser(usrObjs[0]);
-          TktDb.instance.getUserInfo();
+          List<tktUser.User> usrObjs =
+              data2.map((tagJson) => tktUser.User.fromJson(tagJson)).toList();
+          await TktDb.instance.deleteUserInfo();
+          await insertUser(usrObjs[0]);
+          getEmpImg();
+          _register(usrObjs[0].empName);
+          //TktDb.instance.getUserInfo();
           Get.toNamed(RoutesClass.getHomeRoute());
         } else {
           Message.taskErrorOrWarning(
@@ -94,12 +101,97 @@ class _LoginState extends State<Login> {
     }
   }
 
+  Future<dynamic> getEmpImg() async {
+    var data = await TktDb.instance.getUserInfo();
+
+    if (data.length > 0) {
+      var url = Uri.parse(data[0].imgUrl);
+      var response = await http.get(url);
+      var documentDirectory = await getApplicationDocumentsDirectory();
+      var firstPath = "${documentDirectory.path}/profilepic";
+      var filePathAndName = '${documentDirectory.path}/profilepic/${data[0].empId}.jpg';
+      //comment out the next three lines to prevent the image from being saved
+      //to the device to show that it's coming from the internet
+      await Directory(firstPath).create(recursive: true);
+      File file2 = File(filePathAndName);
+      file2.writeAsBytesSync(response.bodyBytes);
+    }
+  }
+
+  void _register(String uname) async {
+    FocusScope.of(context).unfocus();
+    try {
+      final credential =
+          await FirebaseAuth.instance.createUserWithEmailAndPassword(
+        email: '${uidController.text}@hits.com',
+        password: 'password',
+      );
+      await FirebaseChatCore.instance.createUserInFirestore(
+        types.User(
+          firstName: uname,
+          id: credential.user!.uid,
+          imageUrl: '',
+          lastName: '',
+        ),
+      );
+
+      if (!mounted) return;
+      // Navigator.of(context)
+      //   ..pop()
+      //   ..pop();
+    } catch (e) {
+      // await showDialog(
+      //   context: context,
+      //   builder: (context) => AlertDialog(
+      //     actions: [
+      //       TextButton(
+      //         onPressed: () {
+      //           Navigator.of(context).pop();
+      //         },
+      //         child: const Text('OK'),
+      //       ),
+      //     ],
+      //     content: Text(
+      //       e.toString(),
+      //     ),
+      //     title: const Text('Error'),
+      //   ),
+      // );
+    }
+
+    try {
+      await FirebaseAuth.instance.signInWithEmailAndPassword(
+        email: '${uidController.text}@hits.com',
+        password: 'password',
+      );
+      if (!mounted) return;
+      // ignore: empty_catches
+    } catch (e) {
+      await showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: const Text('OK'),
+            ),
+          ],
+          content: Text(
+            e.toString(),
+          ),
+          title: const Text('Error'),
+        ),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body:
-         DoubleBackToCloseApp(
-        snackBar: const SnackBar(
+      body: DoubleBackToCloseApp(
+          snackBar: const SnackBar(
             content: Text('Tap back again to leave'),
           ),
           child: Padding(
@@ -107,10 +199,10 @@ class _LoginState extends State<Login> {
               child: ListView(
                 children: <Widget>[
                   SizedBox(
-                      width: 120,
-                      height: 120,
-                      child: Image.asset('assets/img/logo.jpg'),
-                    ),
+                    width: 120,
+                    height: 120,
+                    child: Image.asset('assets/img/logo.jpg'),
+                  ),
                   Container(
                       alignment: Alignment.center,
                       padding: const EdgeInsets.all(10),
@@ -137,7 +229,6 @@ class _LoginState extends State<Login> {
                       decoration: const InputDecoration(
                         border: OutlineInputBorder(),
                         labelText: 'User Id',
-                        
                       ),
                       validator: (value) {
                         if (value == null || value.isEmpty) {
@@ -158,7 +249,9 @@ class _LoginState extends State<Login> {
                       ),
                     ),
                   ),
-                  const SizedBox(height: 40,),
+                  const SizedBox(
+                    height: 40,
+                  ),
                   GestureDetector(
                     // When the child is tapped, show a snackbar
                     onTap: () async {

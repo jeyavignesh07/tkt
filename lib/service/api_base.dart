@@ -6,4 +6,5 @@ class ApiBase {
   static String createTktEndPoint = '/api/CreateTkt';
   static String updateTktStatsEndPoint = '/api/UpdateTkt';
   static String getTktEndPoint = '/api/gettkts';
+  static String addAttachmentEndPoint = '/api/AddAttachment';
 }

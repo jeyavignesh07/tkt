@@ -35,4 +35,10 @@ List<RiveAsset> sideMenus=[
     stateMachineName: "CHAT_Interactivity",
      title: "Help"
   ),
+   RiveAsset(
+    "assets/img/iconset.riv",
+    artboard: "USER",
+    stateMachineName: "USER_Interactivity",
+     title: "Log out"
+  ),
 ];

@@ -2,6 +2,8 @@ import 'dart:convert';
 
 import 'package:filter_list/filter_list.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_sharing_intent/model/sharing_file.dart';
+import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:http/http.dart' as http;
 import 'package:ticket_app/db/tkt_db.dart';
@@ -28,21 +30,39 @@ class _UpdateTktPageState extends State<UpdateTktPage> {
   List<String> selectedStatusList = [];
 
   bool _isLoading = false;
-  bool _isTaskCreated = false;
+  String status = 'All';
+
+  List<SharedFile>? list;
 
   @override
   void initState() {
     super.initState();
-    startMove();
+    startMove('L');
     getRaisedByUserList();
   }
 
-  Future startMove() async {
+  Future startMove(String tkt) async {
+    if (Get.arguments != null) {
+      //final args = Get.arguments['filesList'];
+      //list = args;
+      status = Get.arguments['status'];
+    }
+    if (status != 'All') {
+      selectedStatusList.add(status);
+    }
+    // if(list!.isNotEmpty){
+    //   await TktDb.instance.createSharedFile(list!);
+    // }
     setState(() {
       _isLoading = true;
     });
     empId = await getEmpId();
-    lTktNo = await getLastTkt();
+    if (tkt == 'L') {
+      lTktNo = await getLastTkt();
+    } else if (tkt == 'F') {
+      lTktNo = '0';
+    }
+  
     setState(() {});
     await getTktListData();
     setState(() {
@@ -87,6 +107,8 @@ class _UpdateTktPageState extends State<UpdateTktPage> {
       var tktHdr = data1["tkt"] as List;
       var tktAssignedTo = data1["tkt1"] as List;
       var tktCopiedTo = data1["tkt2"] as List;
+      var tktAttachments = data1["tkt3"] as List;
+      var tktTags = data1["tkt4"] as List;
 
       List<TktHdr> tktHdrList =
           tktHdr.map((tagJson) => TktHdr.fromJson(tagJson)).toList();
@@ -95,11 +117,18 @@ class _UpdateTktPageState extends State<UpdateTktPage> {
           .toList();
       List<TktDtlCopy> tktCopiedToList =
           tktCopiedTo.map((tagJson) => TktDtlCopy.fromJson(tagJson)).toList();
+      List<TktDtlAttachment> tktAttachmentList = tktAttachments
+          .map((tagJson) => TktDtlAttachment.fromJson(tagJson))
+          .toList();
+      List<TktDtlTag> tktTagsList =
+          tktTags.map((tagJson) => TktDtlTag.fromJson(tagJson)).toList();
       await TktDb.instance.createTktHdrList(tktHdrList);
       await TktDb.instance.createTktDtlAssignToList(tktAssignedToList);
       await TktDb.instance.createTktDtlCopyToList(tktCopiedToList);
+      await TktDb.instance.createTktAttachments(tktAttachmentList);
+      await TktDb.instance.createTktDtlTagList(tktTagsList);
     } else {
-      print(response.reasonPhrase);
+      //print(response.reasonPhrase);
     }
   }
 
@@ -145,7 +174,7 @@ class _UpdateTktPageState extends State<UpdateTktPage> {
   Widget build(BuildContext context) {
     return Scaffold(
         body: RefreshIndicator(
-            onRefresh: startMove,
+            onRefresh: () => startMove('F'),
             child: ListView(children: [
               Container(
                   width: MediaQuery.of(context).size.width * 0.95,
@@ -156,7 +185,7 @@ class _UpdateTktPageState extends State<UpdateTktPage> {
                       color: const Color(0x6674b9ff),
                     ),
                     borderRadius: const BorderRadius.all(Radius.circular(20)),
-                    color: const Color(0x6674b9ff),
+                    color: const Color(0xff74b9ff),
                   ),
                   child: ListView(
                     scrollDirection: Axis.horizontal,

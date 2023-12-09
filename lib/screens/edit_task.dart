@@ -1,14 +1,10 @@
 import 'dart:convert';
-import 'package:chips_choice_null_safety/chips_choice_null_safety.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/rendering.dart';
-import 'package:fluttertoast/fluttertoast.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:multi_select_flutter/multi_select_flutter.dart';
 import 'package:ticket_app/models/tkt.dart';
-import 'package:ticket_app/widgets/category_card';
 import 'package:http/http.dart' as http;
 import 'package:ticket_app/widgets/error_warning_ms.dart';
 import '../db/tkt_db.dart';
@@ -17,14 +13,22 @@ import '../routes/routes.dart';
 import 'package:ticket_app/models/user.dart';
 import 'package:ticket_app/service/api_base.dart';
 
-class AddNewTask extends StatefulWidget {
-  const AddNewTask({Key? key}) : super(key: key);
+class EditTask extends StatefulWidget {
+  final String tktNo;
+  final List<String> initSelectedAssign;
+  final List<String> initSelectedCopy;
+  const EditTask({
+    super.key,
+    required this.tktNo,
+    required this.initSelectedAssign,
+    required this.initSelectedCopy,
+  });
 
   @override
-  State<AddNewTask> createState() => _AddNewTaskState();
+  State<EditTask> createState() => _EditTaskState();
 }
 
-class _AddNewTaskState extends State<AddNewTask> {
+class _EditTaskState extends State<EditTask> {
   late TextEditingController _Titlecontroller;
   late TextEditingController _Descriptioncontroller;
   late TextEditingController _Datecontroller;
@@ -51,11 +55,11 @@ class _AddNewTaskState extends State<AddNewTask> {
   late String devId;
   late String tktNo;
   String tkt = "TKT";
+  DateTime createdOn = DateTime.now();
   DateTime SelectedDate = DateTime.now();
   String Category = "Meeting";
   @override
   void initState() {
-    super.initState();
     startMove();
     _Titlecontroller = TextEditingController();
     _Descriptioncontroller = TextEditingController();
@@ -67,28 +71,21 @@ class _AddNewTaskState extends State<AddNewTask> {
         text: DateFormat.jm().format(DateTime.now().add(
       const Duration(hours: 1),
     )));
+    selectedAssign = widget.initSelectedAssign;
+    selectedCopy = widget.initSelectedCopy;
+    super.initState();
   }
 
   Future startMove() async {
     setState(() {
       _isLoading = true;
     });
-    await getTagsList();
-    //await getUserListData();
+    //await getTagsList();
+    await getTktDetail();
     await getUserList();
     setState(() {
       _isLoading = false;
     });
-  }
-
-  Future getDevId() async {
-    var data = await TktDb.instance.getUserInfo();
-    var data1 = await TktDb.instance.getTktCount();
-    if (data.length > 0) {
-      devId = data[0].devid.toString();
-      usrId = data[0].empId.toString();
-    }
-    tktNo = (data1.length + 1).toString();
   }
 
   Future<dynamic> getUserList() async {
@@ -101,6 +98,21 @@ class _AddNewTaskState extends State<AddNewTask> {
       }
       userListCopy = List.from(userListAssign);
     }
+  }
+
+  Future getTktDetail() async {
+    var data = await TktDb.instance.getTktDetail(widget.tktNo);
+    // var tktAssignedTo = await TktDb.instance.getTktDetailAssignTo(widget.tktNo);
+    // var tktCopiedTo = await TktDb.instance.getTktDetailCopyTo(widget.tktNo);
+    //var tktTags = await TktDb.instance.getTktDetailTags(widget.tktNo);
+    if (data.length > 0) {
+      _Titlecontroller.text = data[0].tktTitle;
+      _Descriptioncontroller.text = data[0].tktDesc;
+      SelectedDate = DateTime.parse(data[0].tktReplyOn);
+      createdOn = DateTime.parse(data[0].tktCreatedOn);
+    }
+    _Datecontroller = TextEditingController(
+        text: DateFormat("yyyy-MM-dd").format(SelectedDate));
   }
 
   bool _dataValidation() {
@@ -137,36 +149,31 @@ class _AddNewTaskState extends State<AddNewTask> {
     }
   }
 
+  Future getDevId() async {
+    var data = await TktDb.instance.getUserInfo();
+    if (data.length > 0) {
+      devId = data[0].devid.toString();
+      usrId = data[0].empId.toString();
+    }
+  }
+
   Future createTask() async {
     if (_dataValidation()) {
       setState(() {
         _isTaskCreated = true;
       });
-
       await getDevId();
       TktHdr th = TktHdr(
-          tktNo: tkt + devId + tktNo,
+          tktNo: widget.tktNo,
           tktTitle: _Titlecontroller.text,
           tktDesc: _Descriptioncontroller.text,
           tktCreatedBy: usrId,
-          tktCreatedOn: DateTime.now().toString().substring(0, 23),
+          tktCreatedOn: createdOn.toString().substring(0, 23),
           tktReplyOn:
               DateFormat("yyyy-MM-dd").parse(_Datecontroller.text).toString(),
           tktStatus: 'Raised');
-      await TktDb.instance.createTktHdr(th);
-      for (String x in selectedAssign) {
-        TktDtlAssign td =
-            TktDtlAssign(tktNo: tkt + devId + tktNo, tktAssignedTo: x);
-        await TktDb.instance.createTktDtlAssignTo(td);
-      }
-      for (String x in selectedCopy) {
-        TktDtlCopy td = TktDtlCopy(tktNo: tkt + devId + tktNo, tktCopiedTo: x);
-        await TktDb.instance.createTktDtlCopyTo(td);
-      }
-      for (String x in tags) {
-        TktDtlTag td = TktDtlTag(tktNo: tkt + devId + tktNo, tags: x);
-        await TktDb.instance.createTktDtlTag(td);
-      }
+      //await TktDb.instance.createTktHdr(th);
+
       await createTkt(th);
       setState(() {
         _isTaskCreated = false;
@@ -312,8 +319,18 @@ class _AddNewTaskState extends State<AddNewTask> {
         var data1 = jsonDecode(data);
         var data2 = data1["tkt"] as List;
         if (data2[0]['RES'] == 'OK') {
-          Message.taskErrorOrWarning(
-              "Task Created", "Succesfully", "#99EFABE5");
+          await TktDb.instance.createTktHdr(th);
+          for (String x in selectedAssign) {
+            TktDtlAssign td =
+                TktDtlAssign(tktNo: widget.tktNo, tktAssignedTo: x);
+            await TktDb.instance.createTktDtlAssignTo(td);
+          }
+          for (String x in selectedCopy) {
+            TktDtlCopy td =
+                TktDtlCopy(tktNo: widget.tktNo, tktCopiedTo: x);
+            await TktDb.instance.createTktDtlCopyTo(td);
+          }
+          Message.taskErrorOrWarning("Task Edited", "Succesfully", "#99EFABE5");
           return;
         }
       } else {
@@ -343,7 +360,7 @@ class _AddNewTaskState extends State<AddNewTask> {
                       padding: const EdgeInsets.only(
                           left: 10, right: 10, top: 20, bottom: 20),
                       child: Row(
-                        mainAxisAlignment: MainAxisAlignment.start,
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           GestureDetector(
                             onTap: () {
@@ -352,20 +369,14 @@ class _AddNewTaskState extends State<AddNewTask> {
                             child: const Icon(Icons.arrow_back,
                                 size: 30, color: Colors.white),
                           ),
-                          const SizedBox(
-                            width: 50,
-                          ),
                           Text(
-                            "Create New Task",
+                            "Edit Task",
                             textAlign: TextAlign.center,
                             style: GoogleFonts.montserrat(
                               color: Colors.white,
                               fontSize: 20,
                               decoration: TextDecoration.none,
                             ),
-                          ),
-                          const SizedBox(
-                            width: 40,
                           ),
                           GestureDetector(
                             onTap: () async {
@@ -513,7 +524,7 @@ class _AddNewTaskState extends State<AddNewTask> {
                                   child: MultiSelectDialogField(
                                     itemsTextStyle: GoogleFonts.montserrat(
                                       fontSize: 15,
-                                    ),                                    
+                                    ),
                                     searchable: true,
                                     selectedItemsTextStyle:
                                         GoogleFonts.montserrat(
@@ -525,6 +536,7 @@ class _AddNewTaskState extends State<AddNewTask> {
                                             .map((e) => MultiSelectItem(
                                                 e.empId, e.empName))
                                             .toList(),
+                                    initialValue: selectedAssign,
                                     title: Text(
                                       "Assign to",
                                       textAlign: TextAlign.center,
@@ -602,6 +614,7 @@ class _AddNewTaskState extends State<AddNewTask> {
                                         .map((e) =>
                                             MultiSelectItem(e.empId, e.empName))
                                         .toList(),
+                                    initialValue: selectedCopy,
                                     title: Text(
                                       "Copy to",
                                       textAlign: TextAlign.center,
@@ -645,78 +658,78 @@ class _AddNewTaskState extends State<AddNewTask> {
                               ],
                             ),
                           ),
-                          Container(
-                            padding: const EdgeInsets.only(top: 0, bottom: 0),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  "Tags",
-                                  textAlign: TextAlign.center,
-                                  style: GoogleFonts.montserrat(
-                                    color: Colors.black,
-                                    fontSize: 20,
-                                    decoration: TextDecoration.none,
-                                  ),
-                                ),
-                                Wrap(
-                                  alignment: WrapAlignment.spaceEvenly,
-                                  crossAxisAlignment: WrapCrossAlignment.start,
-                                  children: [
-                                    ChipsChoice<String>.multiple(
-                                      value: tags,
-                                      onChanged: (val) => {
-                                        if (val.contains("+ Add Tag"))
-                                          {
-                                            _showAlertDialog(),
-                                            setState(() => {}),
-                                          }
-                                        else
-                                          {
-                                            setState(() => tags = val),
-                                          }
-                                      },
-                                      // onLongPress: (val) => {
-                                      //   if (val.contains("+ Add Tag"))
-                                      //     {
+                          // Container(
+                          //   padding: const EdgeInsets.only(top: 0, bottom: 0),
+                          //   child: Column(
+                          //     crossAxisAlignment: CrossAxisAlignment.start,
+                          //     children: [
+                          //       Text(
+                          //         "Tags",
+                          //         textAlign: TextAlign.center,
+                          //         style: GoogleFonts.montserrat(
+                          //           color: Colors.black,
+                          //           fontSize: 20,
+                          //           decoration: TextDecoration.none,
+                          //         ),
+                          //       ),
+                          //       Wrap(
+                          //         alignment: WrapAlignment.spaceEvenly,
+                          //         crossAxisAlignment: WrapCrossAlignment.start,
+                          //         children: [
+                          //           ChipsChoice<String>.multiple(
+                          //             value: tags,
+                          //             onChanged: (val) => {
+                          //               if (val.contains("+ Add Tag"))
+                          //                 {
+                          //                   _showAlertDialog(),
+                          //                   setState(() => {}),
+                          //                 }
+                          //               else
+                          //                 {
+                          //                   setState(() => tags = val),
+                          //                 }
+                          //             },
+                          //             // onLongPress: (val) => {
+                          //             //   if (val.contains("+ Add Tag"))
+                          //             //     {
 
-                                      //     }
-                                      //   else
-                                      //     {
-                                      //       Fluttertoast.showToast(
-                                      //       msg: "you clicked!$val",
-                                      //       toastLength: Toast.LENGTH_SHORT,
-                                      //       gravity: ToastGravity
-                                      //           .BOTTOM, // Also possible "TOP" and "CENTER"
-                                      //       backgroundColor:
-                                      //           const Color(0xffe74c3c),
-                                      //       textColor: const Color(0xffffffff))
-                                      //     }
-                                      // },
-                                      choiceItems: C2Choice.listFrom(
-                                          source: options,
-                                          value: (i, v) => v,
-                                          label: (i, v) => v),
-                                      choiceActiveStyle: const C2ChoiceStyle(
-                                          backgroundColor: Color(0x22EFABE5),
-                                          color: Color.fromRGBO(130, 0, 255, 1),
-                                          borderColor:
-                                              Color.fromRGBO(130, 0, 255, 1),
-                                          borderRadius: BorderRadius.all(
-                                              Radius.circular(5))),
-                                      choiceStyle: const C2ChoiceStyle(
-                                          color: Color(0xFF1C1C1C),
-                                          borderRadius: BorderRadius.all(
-                                              Radius.circular(5))),
-                                      wrapped: true,
-                                    ),
-                                  ],
-                                )
-                              ],
-                            ),
-                          ),
+                          //             //     }
+                          //             //   else
+                          //             //     {
+                          //             //       Fluttertoast.showToast(
+                          //             //       msg: "you clicked!$val",
+                          //             //       toastLength: Toast.LENGTH_SHORT,
+                          //             //       gravity: ToastGravity
+                          //             //           .BOTTOM, // Also possible "TOP" and "CENTER"
+                          //             //       backgroundColor:
+                          //             //           const Color(0xffe74c3c),
+                          //             //       textColor: const Color(0xffffffff))
+                          //             //     }
+                          //             // },
+                          //             choiceItems: C2Choice.listFrom(
+                          //                 source: options,
+                          //                 value: (i, v) => v,
+                          //                 label: (i, v) => v),
+                          //             choiceActiveStyle: const C2ChoiceStyle(
+                          //                 backgroundColor: Color(0x22EFABE5),
+                          //                 color: Color.fromRGBO(130, 0, 255, 1),
+                          //                 borderColor:
+                          //                     Color.fromRGBO(130, 0, 255, 1),
+                          //                 borderRadius: BorderRadius.all(
+                          //                     Radius.circular(5))),
+                          //             choiceStyle: const C2ChoiceStyle(
+                          //                 color: Color(0xFF1C1C1C),
+                          //                 borderRadius: BorderRadius.all(
+                          //                     Radius.circular(5))),
+                          //             wrapped: true,
+                          //           ),
+                          //         ],
+                          //       )
+                          //     ],
+                          //   ),
+                          // ),
                           const SizedBox(
-                            height: 50,
+                            height: 20,
                           ),
                           GestureDetector(
                             child: Container(
@@ -727,7 +740,7 @@ class _AddNewTaskState extends State<AddNewTask> {
                               ),
                               alignment: Alignment.center,
                               child: Text(
-                                "Create Task",
+                                "Edit Task",
                                 style: GoogleFonts.montserrat(
                                   color: Colors.white,
                                   fontSize: 18,

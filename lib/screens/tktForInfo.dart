@@ -87,6 +87,8 @@ class _InfoTktPageState extends State<InfoTktPage> {
       var tktHdr = data1["tkt"] as List;
       var tktAssignedTo = data1["tkt1"] as List;
       var tktCopiedTo = data1["tkt2"] as List;
+      var tktAttachments = data1["tkt3"] as List;
+      var tktTags = data1["tkt4"] as List;
 
       List<TktHdr> tktHdrList =
           tktHdr.map((tagJson) => TktHdr.fromJson(tagJson)).toList();
@@ -95,9 +97,16 @@ class _InfoTktPageState extends State<InfoTktPage> {
           .toList();
       List<TktDtlCopy> tktCopiedToList =
           tktCopiedTo.map((tagJson) => TktDtlCopy.fromJson(tagJson)).toList();
+      List<TktDtlAttachment> tktAttachmentList = tktAttachments
+          .map((tagJson) => TktDtlAttachment.fromJson(tagJson))
+          .toList();
+      List<TktDtlTag> tktTagsList =
+          tktTags.map((tagJson) => TktDtlTag.fromJson(tagJson)).toList();
       await TktDb.instance.createTktHdrList(tktHdrList);
       await TktDb.instance.createTktDtlAssignToList(tktAssignedToList);
       await TktDb.instance.createTktDtlCopyToList(tktCopiedToList);
+      await TktDb.instance.createTktAttachments(tktAttachmentList);
+      await TktDb.instance.createTktDtlTagList(tktTagsList);
     } else {
       print(response.reasonPhrase);
     }
@@ -156,7 +165,7 @@ class _InfoTktPageState extends State<InfoTktPage> {
                       color: const Color(0x6674b9ff),
                     ),
                     borderRadius: const BorderRadius.all(Radius.circular(20)),
-                    color: const Color(0x6674b9ff),
+                    color: const Color(0xff74b9ff),
                   ),
                   child: ListView(
                     scrollDirection: Axis.horizontal,

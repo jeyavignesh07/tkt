@@ -1,8 +1,17 @@
+import 'dart:io';
+import 'dart:math';
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:get/get_core/src/get_main.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:path/path.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:rive/rive.dart';
+import 'package:sqflite/sqflite.dart';
 import 'package:ticket_app/db/tkt_db.dart';
+import 'package:ticket_app/routes/routes.dart';
 import '../../models/rive_asset.dart';
 
 class SideMenu extends StatefulWidget {
@@ -25,7 +34,7 @@ class _SideMenuState extends State<SideMenu> {
           color: const Color(0xFF17203A),
           child: Column(children: [
             const Padding(
-              padding: EdgeInsets.only(left: 4, top: 12,right: 20),
+              padding: EdgeInsets.only(left: 4, top: 12, right: 20),
               child: InfoCard(),
             ),
             Padding(
@@ -87,6 +96,30 @@ class SideMenuTile extends StatelessWidget {
   final VoidCallback press;
   final ValueChanged<Artboard> riveonInit;
   final bool isActive;
+  
+  logOut(String i) async {
+    if(i=='Log out'){
+      String empId='';
+      // Future<String> getDatabasesPath() => databaseFactory.getDatabasesPath();
+      // final dbPath = await getDatabasesPath();
+      // final path = join(dbPath, 'tkt.db');
+      // databaseFactory.deleteDatabase(path); 
+      var data = await TktDb.instance.getUserInfo();
+      empId = data[0].empId;
+      await TktDb.instance.deleteUserInfo();
+      await TktDb.instance.deleteTkts();
+      var documentDirectory = await getApplicationDocumentsDirectory();
+      var filePathAndName = '${documentDirectory.path}/profilepic/$empId.jpg';
+      try {
+          final file = File(filePathAndName);
+          await file.delete();
+        // ignore: empty_catches
+        } catch (e) {
+          
+        }
+      Get.toNamed(RoutesClass.getLogInRoute());
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -114,7 +147,9 @@ class SideMenuTile extends StatelessWidget {
             ),
           ),
           ListTile(
-            onTap: press,
+            onTap: () {
+              logOut(menu.title);
+            },
             leading: SizedBox(
                 height: 34,
                 width: 34,
@@ -141,10 +176,17 @@ class InfoCard extends StatefulWidget {
 
   @override
   State<InfoCard> createState() => _InfoCardState();
-  
 }
 
 class _InfoCardState extends State<InfoCard> {
+  String imageData = '';
+  String empId = '';
+  @override
+  void initState() {
+    super.initState();
+    startMove();
+  }
+
   Future<dynamic> getEmpImg() async {
     var data = await TktDb.instance.getUserInfo();
     if (data.length > 0) {
@@ -166,10 +208,17 @@ class _InfoCardState extends State<InfoCard> {
     }
   }
 
+  Future<void> startMove() async {
+    var data = await TktDb.instance.getUserInfo();
+    empId = data[0].empId;
+    var documentDirectory = await getApplicationDocumentsDirectory();
+    imageData = '${documentDirectory.path}/profilepic/$empId.jpg';
+  }
+
   @override
   Widget build(BuildContext context) {
     return ListTile(
-      leading: Container(
+      leading: SizedBox(
         width: 50,
         height: 50,
         child: FutureBuilder(
@@ -177,7 +226,10 @@ class _InfoCardState extends State<InfoCard> {
           builder: (context, AsyncSnapshot snapshot) {
             if (snapshot.hasData) {
               return CircleAvatar(
-                backgroundImage: NetworkImage('${snapshot.data}'),
+                backgroundImage: Image.file(
+                  File(imageData),
+                  fit: BoxFit.fill,
+                ).image,
                 radius: 30,
               );
             } else {
